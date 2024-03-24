@@ -48,7 +48,7 @@ func (app *App) getProduct(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	key, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		sendError(writer, http.StatusBadRequest, fmt.Sprintf("invalid product id: %v", key))
+		sendError(writer, http.StatusBadRequest, fmt.Sprintf("invalid product id: %v", vars["id"]))
 		return
 	}
 	p := product{ID: key}
