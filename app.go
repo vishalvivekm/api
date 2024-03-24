@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type App struct {
@@ -32,6 +33,7 @@ func (app *App) Run(address string) {
 }
 func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
+	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
 }
 
 func (app *App) getProducts(writer http.ResponseWriter, request *http.Request) {
@@ -40,6 +42,27 @@ func (app *App) getProducts(writer http.ResponseWriter, request *http.Request) {
 		sendError(writer, http.StatusInternalServerError, err.Error())
 	}
 	sendResponse(writer, http.StatusOK, products)
+}
+
+func (app *App) getProduct(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	key, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, fmt.Sprintf("invalid product id: %v", key))
+		return
+	}
+	p := product{ID: key}
+	err = p.getProduct(app.DB)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			sendError(writer, http.StatusNotFound, fmt.Sprintf("product with id=%v not found", p.ID))
+		default:
+			sendError(writer, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+	sendResponse(writer, http.StatusOK, p)
 }
 func sendResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
 	response, _ := json.Marshal(payload)
