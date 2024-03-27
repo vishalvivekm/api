@@ -34,6 +34,7 @@ func (app *App) Run(address string) {
 func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
+	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
 }
 
 func (app *App) getProducts(writer http.ResponseWriter, request *http.Request) {
@@ -64,11 +65,30 @@ func (app *App) getProduct(writer http.ResponseWriter, request *http.Request) {
 	}
 	sendResponse(writer, http.StatusOK, p)
 }
+func (app *App) createProduct(writer http.ResponseWriter, request *http.Request) {
+	var p product
+
+	err := json.NewDecoder(request.Body).Decode(&p)
+	//log.Println(p)
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, "invalid request payload")
+		return
+	}
+	err = p.createProductInDB(app.DB)
+	if err != nil {
+		sendError(writer, http.StatusInternalServerError, err.Error())
+	}
+	sendResponse(writer, http.StatusOK, p)
+
+}
 func sendResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(response)
+	_, err := w.Write(response)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, fmt.Sprintf("could not write response, err: %v", err.Error()))
+	}
 }
 func sendError(w http.ResponseWriter, statusCode int, err string) {
 	errorMsg := map[string]string{"error: ": err}
