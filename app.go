@@ -36,12 +36,14 @@ func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
 	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
 	app.Router.HandleFunc("/product/{id}", app.updateProduct).Methods("PUT")
+	app.Router.HandleFunc("/product/{id}", app.deleteProduct).Methods("DELETE")
 }
 
 func (app *App) getProducts(writer http.ResponseWriter, request *http.Request) {
 	products, err := getProductsFromDB(app.DB)
 	if err != nil {
 		sendError(writer, http.StatusInternalServerError, err.Error())
+		return
 	}
 	sendResponse(writer, http.StatusOK, products)
 }
@@ -78,6 +80,7 @@ func (app *App) createProduct(writer http.ResponseWriter, request *http.Request)
 	err = p.createProductInDB(app.DB)
 	if err != nil {
 		sendError(writer, http.StatusInternalServerError, err.Error())
+		return
 	}
 	sendResponse(writer, http.StatusOK, p)
 
@@ -103,6 +106,22 @@ func (app *App) updateProduct(writer http.ResponseWriter, request *http.Request)
 	}
 	sendResponse(writer, http.StatusOK, p)
 }
+
+func (app *App) deleteProduct(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	key, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, "invalid product ID")
+		return
+	}
+	p := product{ID: key}
+	err = p.deleteProductFromDB(app.DB)
+	if err != nil {
+		sendError(writer, http.StatusInternalServerError, fmt.Sprintf("could not delete product from db, err: %v", err.Error()))
+		return
+	}
+	sendResponse(writer, http.StatusOK, map[string]string{"result": "deleting successful"})
+}
 func sendResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 	w.Header().Set("content-type", "application/json")
@@ -110,6 +129,7 @@ func sendResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
 	_, err := w.Write(response)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, fmt.Sprintf("could not write response, err: %v", err.Error()))
+		return
 	}
 }
 func sendError(w http.ResponseWriter, statusCode int, err string) {
