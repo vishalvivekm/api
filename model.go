@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 )
 
 type product struct {
@@ -51,4 +53,17 @@ func (p *product) createProductInDB(db *sql.DB) error {
 	}
 	p.ID = int(id) //reflect.TypeOf(id) // int64
 	return nil
+}
+func (p *product) updateProductInDB(db *sql.DB) error {
+	query := fmt.Sprintf("update products set name='%v', quantity=%v, price=%v where id=%v", p.Name, p.Quantity, p.Price, p.ID)
+	result, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+	log.Println(result.RowsAffected())
+	rowsAffected, err := result.RowsAffected()
+	if rowsAffected == 0 {
+		return errors.New("no row with given id exists")
+	}
+	return err
 }
