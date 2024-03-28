@@ -2,6 +2,6 @@ package main
 
 func main() {
 	app := App{}
-	app.Initialise()
+	app.Initialise(DbUser, DbPassword, DBName)
 	app.Run("localhost:9000")
 }

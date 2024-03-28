@@ -16,7 +16,7 @@ type App struct {
 	DB     *sql.DB
 }
 
-func (app *App) Initialise() error {
+func (app *App) Initialise(DbUser, DbPassword, DBName string) error {
 	connectionString := fmt.Sprintf("%v:%v@tcp(127.0.0.1:3306)/%v", DbUser, DbPassword, DBName)
 	var err error
 	app.DB, err = sql.Open("mysql", connectionString)
@@ -82,7 +82,7 @@ func (app *App) createProduct(writer http.ResponseWriter, request *http.Request)
 		sendError(writer, http.StatusInternalServerError, err.Error())
 		return
 	}
-	sendResponse(writer, http.StatusOK, p)
+	sendResponse(writer, http.StatusCreated, p)
 
 }
 func (app *App) updateProduct(writer http.ResponseWriter, request *http.Request) {
