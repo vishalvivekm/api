@@ -75,7 +75,7 @@ func TestCreateProduct(t *testing.T) {
 
 	var m map[string]interface{}
 	json.Unmarshal(response.Body.Bytes(), &m)
-	log.Println(m)
+	//log.Println(m)
 
 	if m["name"] != "chair" {
 		t.Errorf("expected name: %v, got: %v", "chair", m["name"])
@@ -84,4 +84,19 @@ func TestCreateProduct(t *testing.T) {
 		t.Errorf("expected quantity: %v, got: %v", 1.00, m["quantity"])
 	}
 
+}
+func TestDeleteProduct(t *testing.T) {
+	clearTable()
+	addProduct("connector", 10, 10)
+	req, _ := http.NewRequest("GET", "/product/1", nil)
+	response := sendRequest(req)
+	checkStatusCode(t, http.StatusOK, response.Code)
+
+	req, _ = http.NewRequest("DELETE", "/product/1", nil)
+	response = sendRequest(req)
+	checkStatusCode(t, http.StatusOK, response.Code)
+
+	req, _ = http.NewRequest("GET", "/product/1", nil)
+	response = sendRequest(req)
+	checkStatusCode(t, http.StatusNotFound, response.Code)
 }
