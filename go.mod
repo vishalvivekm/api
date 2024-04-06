@@ -1,4 +1,4 @@
-module vishalvivekm/api
+module github.com/vishalvivekm/api
 
 go 1.21.4
 
